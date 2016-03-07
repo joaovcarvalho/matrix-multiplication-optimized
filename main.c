@@ -6,16 +6,14 @@
 #include <sys/time.h>
 #include <assert.h>
 #include <omp.h>
-#include <xmmintrin.h>
+//#include <xmmintrin.h>
 #include <x86intrin.h>
+//#include <pmmintrin.h>
 /* the following two definitions of DEBUGGING control whether or not
    debugging information is written out. To put the program into
    debugging mode, uncomment the following line: */
 //#define DEBUGGING(_x) _x
 #define DEBUGGING(_x)
-
-#define random rand
-#define srandom srand
 
 struct complex {
     double real;
@@ -223,16 +221,23 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                               sum4Img = _mm_add_ps(sum4Img, productImg);
                             }
 
-                            sum4Real = _mm_hadd_ps(sum4Real, sum4Real);
+                            /*sum4Real = _mm_hadd_ps(sum4Real, sum4Real);
                             sum4Real = _mm_hadd_ps(sum4Real, sum4Real);
 
                             sum4Img = _mm_hadd_ps(sum4Img, sum4Img);
-                            sum4Img = _mm_hadd_ps(sum4Img, sum4Img);
+                            sum4Img = _mm_hadd_ps(sum4Img, sum4Img);*/
 
                             _mm_storeu_ps(&tmpReal[0], sum4Real);
                             _mm_storeu_ps(&tmpImg[0], sum4Img);
-                            sum.real = tmpReal[0];
-                            sum.imag = tmpImg[0];
+
+                            for (int p = 0; p < 4; ++p)
+                            {
+                                sum.real += tmpReal[p];
+                                sum.imag += tmpImg[p];
+                            }
+                            
+                            //sum.real = tmpReal[0];
+                            //sum.imag = tmpImg[0];
 
                             //printf("k: %d , ii: %d\n",k,ii );
                             C[ii][jj] = sum;
