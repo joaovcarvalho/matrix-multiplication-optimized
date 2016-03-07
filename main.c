@@ -18,8 +18,8 @@
 #define srandom srand
 
 struct complex {
-    float real;
-    float imag;
+    double real;
+    double imag;
 };
 
 /* write matrix to stdout */
@@ -90,9 +90,8 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
         for ( i = 0; i < dim1; i++ ) {
             for ( j = 0; j < dim2; j++ ) {
                         /* evenly generate values in the range [0, random_range-1)*/
-                result[i][j].real = (float)(random() % random_range);
-                result[i][j].imag = (float)(random() % random_range);
-
+                result[i][j].real = (double)(random() % random_range);
+                result[i][j].imag = (double)(random() % random_range);
                         /* at no loss of precision, negate the values sometimes */
                         /* so the range is now (-(random_range-1), random_range-1)*/
                 if (random() & 1) result[i][j].real = -result[i][j].real;
@@ -151,32 +150,17 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
         }
     }
 
-    // for ( jj = 0; jj < n; jj += block_size ) {
-    //     for ( kk = 0; kk < n; kk += block_size ) {
-    //         for ( i = 0; i < n; i++ ) {
-    //             stopj = min(jj+block_size, n);
-    //             for ( j = jj; j < stopj; j++ ) {
-    //                 sum = 0;
-    //                 stopk = min(kk+block_size, n);
-    //                 for ( k = kk; k < stopk; k++ ) {
-    //                     sum += a[i][k] * b[k][j];
-    //                 }
-    //                 c[i][j]+= sum
-    //             }
-    //         }
-    //     }
-    // }
-
     int min(int a, int b){
-        if( a > b)
-            return b;
-        if( b > a)
-            return a;
+      if( a > b)
+        return b;
+      if( b > a)
         return a;
+      return a;
     }
 
-/* the fast version of matmul written by the team */
-    void team_matmul(struct complex ** A, struct complex ** b, struct complex ** C, int a_rows, int a_cols, int b_cols) {
+    /* the fast version of matmul written by the team */
+    void team_matmul(struct complex ** A, struct complex ** b, struct complex ** C, int a_rows, int a_cols, int b_cols)
+    {
         int i, j;
 
         // Calculating the transpose of the Matrix B
@@ -205,38 +189,38 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             struct complex sum;
                             sum.real = 0.0;
                             sum.imag = 0.0;
-                            
                             float tmpReal[4] = {0,0,0,0};
                             float tmpImg[4] = {0,0,0,0};
 
                             __m128 sum4Real = _mm_set1_ps(0.0);
                             __m128 sum4Img = _mm_set1_ps(0.0);
-                            for (int k = 0; k < a_cols; k += 4) {
-                                // the following code does: sum += A[i][k] * B[k][j];
-                                //printf("k: %d jj: %d ii: %d \n", k, jj, ii );
-                                struct complex a1, a2, a3, a4;
-                                a1 = A[ii][k];
-                                a2 = A[ii][k + 1];
-                                a3 = A[ii][k + 2];
-                                a4 = A[ii][k + 3];
+                            for (int k = 0; k < a_cols; k += 4)
+                            {
+                              // the following code does: sum += A[i][k] * B[k][j];
+                              //printf("k: %d jj: %d ii: %d \n", k, jj, ii );
+                              struct complex a1, a2, a3, a4;
+                              a1 = A[ii][k];
+                              a2 = A[ii][k + 1];
+                              a3 = A[ii][k + 2];
+                              a4 = A[ii][k + 3];
 
-                                struct complex b1, b2, b3, b4;
-                                b1 = B[jj][k];
-                                b2 = B[jj][k + 1];
-                                b3 = B[jj][k + 2];
-                                b4 = B[jj][k + 3];
+                              struct complex b1, b2, b3, b4;
+                              b1 = B[jj][k];
+                              b2 = B[jj][k + 1];
+                              b3 = B[jj][k + 2];
+                              b4 = B[jj][k + 3];
 
-                                __m128 aReal  = _mm_set_ps(a1.real, a2.real, a3.real, a4.real);
-                                __m128 bReal  = _mm_set_ps(b1.real, b2.real, b3.real, b4.real);
+                              __m128 aReal  = _mm_set_ps(a1.real, a2.real, a3.real, a4.real);
+                              __m128 bReal  = _mm_set_ps(b1.real, b2.real, b3.real, b4.real);
 
-                                __m128 aImg   = _mm_set_ps(a1.imag, a2.imag, a3.imag, a4.imag);
-                                __m128 bImg   = _mm_set_ps(b1.imag, b2.imag, b3.imag, b4.imag);
+                              __m128 aImg   = _mm_set_ps(a1.imag, a2.imag, a3.imag, a4.imag);
+                              __m128 bImg   = _mm_set_ps(b1.imag, b2.imag, b3.imag, b4.imag);
 
-                                __m128 productReal = _mm_sub_ps( _mm_mul_ps(aReal, bReal), _mm_mul_ps(aImg, bImg) );
-                                __m128 productImg = _mm_add_ps( _mm_mul_ps(aReal, bImg), _mm_mul_ps(aImg, bReal) );
+                              __m128 productReal = _mm_sub_ps( _mm_mul_ps(aReal, bReal), _mm_mul_ps(aImg, bImg) );
+                              __m128 productImg = _mm_add_ps( _mm_mul_ps(aReal, bImg), _mm_mul_ps(aImg, bReal) );
 
-                                sum4Real = _mm_add_ps(sum4Real, productReal);
-                                sum4Img = _mm_add_ps(sum4Img, productImg);
+                              sum4Real = _mm_add_ps(sum4Real, productReal);
+                              sum4Img = _mm_add_ps(sum4Img, productImg);
                             }
 
                             sum4Real = _mm_hadd_ps(sum4Real, sum4Real);
@@ -254,7 +238,6 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             C[ii][jj] = sum;
                         }
 
-                        
                     }
                 }
         }
@@ -324,7 +307,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
         /* compute elapsed times and speedup factor */
         control_time = time_diff(&pre_time, &start_time);
         mul_time = time_diff(&start_time, &stop_time);
-        speedup = (float) control_time / mul_time;
+        speedup = (double) control_time / mul_time;
 
         printf("Matmul time: %lld microseconds\n", mul_time);
         printf("control time : %lld microseconds\n", control_time);
