@@ -199,19 +199,22 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             __m128 sum4Real = _mm_set1_ps(0.0);
                             __m128 sum4Img = _mm_set1_ps(0.0);
 
-                            for (int k = 0; k < a_cols; k += 4)
-                            {
-                              // the following code does: sum += A[i][k] * B[k][j];
-                              //printf("k: %d jj: %d ii: %d \n", k, jj, ii );
-                              a1 = A[ii][k];
-                              a2 = A[ii][k + 1];
-                              a3 = A[ii][k + 2];
-                              a4 = A[ii][k + 3];
+                            struct complex* ka = A[ii];
+                            struct complex* kb = B[ii];
 
-                              b1 = B[jj][k];
-                              b2 = B[jj][k + 1];
-                              b3 = B[jj][k + 2];
-                              b4 = B[jj][k + 3];
+                            while(ka < A[ii]+a_cols){
+
+                            //for (struct complex* k = A[ii]; k < A[ii]+a_cols; k += 4)
+                            //{
+                              a1 = *(ka);
+                              a2 = *(ka + 1);
+                              a3 = *(ka + 2);
+                              a4 = *(ka + 3);
+
+                              b1 = *(kb);
+                              b2 = *(kb + 1);
+                              b3 = *(kb + 2);
+                              b4 = *(kb + 3);
 
                               __m128 aReal  = _mm_set_ps(a1.real, a2.real, a3.real, a4.real);
                               __m128 bReal  = _mm_set_ps(b1.real, b2.real, b3.real, b4.real);
@@ -224,6 +227,9 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
 
                               sum4Real = _mm_add_ps(sum4Real, productReal);
                               sum4Img = _mm_add_ps(sum4Img, productImg);
+
+                              ka += 4;
+                              kb += 4;
                             }
 
                             /*sum4Real = _mm_hadd_ps(sum4Real, sum4Real);
