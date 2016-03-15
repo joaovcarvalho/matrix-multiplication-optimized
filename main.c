@@ -200,12 +200,10 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             __m128 sum4Img = _mm_set1_ps(0.0);
 
                             struct complex* ka = A[ii];
-                            struct complex* kb = B[ii];
+                            struct complex* kb = B[jj];
 
                             while(ka < A[ii]+a_cols){
 
-                            //for (struct complex* k = A[ii]; k < A[ii]+a_cols; k += 4)
-                            //{
                               a1 = *(ka);
                               a2 = *(ka + 1);
                               a3 = *(ka + 2);
@@ -232,12 +230,6 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                               kb += 4;
                             }
 
-                            /*sum4Real = _mm_hadd_ps(sum4Real, sum4Real);
-                            sum4Real = _mm_hadd_ps(sum4Real, sum4Real);
-
-                            sum4Img = _mm_hadd_ps(sum4Img, sum4Img);
-                            sum4Img = _mm_hadd_ps(sum4Img, sum4Img);*/
-
                             _mm_storeu_ps(&tmpReal[0], sum4Real);
                             _mm_storeu_ps(&tmpImg[0], sum4Img);
 
@@ -246,10 +238,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                                 sum.real += tmpReal[p];
                                 sum.imag += tmpImg[p];
                             }
-                            //sum.real = tmpReal[0];
-                            //sum.imag = tmpImg[0];
 
-                            //printf("k: %d , ii: %d\n",k,ii );
                             C[ii][jj] = sum;
                         }
 
