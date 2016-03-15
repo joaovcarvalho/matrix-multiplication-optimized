@@ -171,38 +171,43 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
             }
         }
 
-        int block_size = 16;
+        int block_size = 4;
         #pragma omp parallel for
         for ( i = 0; i < a_rows; i += block_size ) {
+                struct complex a1, a2, a3, a4;
+                struct complex b1, b2, b3, b4;
+
+                float tmpReal[4] = {0,0,0,0};   
+                float tmpImg[4] = {0,0,0,0};
+
                 int j;
+
+                int stopii = min(i + block_size, a_rows);
                 for( j = 0; j < b_cols; j += block_size ) {
 
-                    int stopii = min(i + block_size, a_rows);
+                    int stopjj = min(j+block_size, b_cols);
 
                     for (int ii = i; ii < stopii; ++ii)
                     {
-                        int stopjj = min(j+block_size, b_cols);
+                        
                         for (int jj = j; jj < stopjj; jj++)
                         {
                             struct complex sum;
                             sum.real = 0.0;
                             sum.imag = 0.0;
-                            float tmpReal[4] = {0,0,0,0};
-                            float tmpImg[4] = {0,0,0,0};
-
+                            
                             __m128 sum4Real = _mm_set1_ps(0.0);
                             __m128 sum4Img = _mm_set1_ps(0.0);
+
                             for (int k = 0; k < a_cols; k += 4)
                             {
                               // the following code does: sum += A[i][k] * B[k][j];
                               //printf("k: %d jj: %d ii: %d \n", k, jj, ii );
-                              struct complex a1, a2, a3, a4;
                               a1 = A[ii][k];
                               a2 = A[ii][k + 1];
                               a3 = A[ii][k + 2];
                               a4 = A[ii][k + 3];
 
-                              struct complex b1, b2, b3, b4;
                               b1 = B[jj][k];
                               b2 = B[jj][k + 1];
                               b3 = B[jj][k + 2];
@@ -235,7 +240,6 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                                 sum.real += tmpReal[p];
                                 sum.imag += tmpImg[p];
                             }
-                            
                             //sum.real = tmpReal[0];
                             //sum.imag = tmpImg[0];
 
