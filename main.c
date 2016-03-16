@@ -151,15 +151,14 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
     int min(int a, int b){
       if( a > b)
         return b;
-      if( b > a)
+      else
         return a;
-      return a;
     }
 
     /* the fast version of matmul written by the team */
     void team_matmul(struct complex ** A, struct complex ** b, struct complex ** C, int a_rows, int a_cols, int b_cols)
     {
-        int i, j;
+        unsigned int i, j;
 
         // Calculating the transpose of the Matrix B
         struct complex ** B = new_empty_matrix(b_cols, a_cols);
@@ -171,7 +170,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
             }
         }
 
-        int block_size = 4;
+        unsigned int block_size = 4;
         #pragma omp parallel for
         for ( i = 0; i < a_rows; i += block_size ) {
                 struct complex a1, a2, a3, a4;
@@ -180,17 +179,17 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                 float tmpReal[4] = {0,0,0,0};   
                 float tmpImg[4] = {0,0,0,0};
 
-                int j;
+                unsigned int j, jj, ii, stopjj, stopii, p;
 
-                int stopii = min(i + block_size, a_rows);
+                stopii = min(i + block_size, a_rows);
                 for( j = 0; j < b_cols; j += block_size ) {
 
-                    int stopjj = min(j+block_size, b_cols);
+                    stopjj = min(j+block_size, b_cols);
 
-                    for (int ii = i; ii < stopii; ++ii)
+                    for (ii = i; ii < stopii; ++ii)
                     {
                         
-                        for (int jj = j; jj < stopjj; jj++)
+                        for (jj = j; jj < stopjj; jj++)
                         {
                             struct complex sum;
                             sum.real = 0.0;
@@ -233,7 +232,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             _mm_storeu_ps(&tmpReal[0], sum4Real);
                             _mm_storeu_ps(&tmpImg[0], sum4Img);
 
-                            for (int p = 0; p < 4; ++p)
+                            for (p = 0; p < 4; ++p)
                             {
                                 sum.real += tmpReal[p];
                                 sum.imag += tmpImg[p];
