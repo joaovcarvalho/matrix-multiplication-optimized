@@ -171,13 +171,13 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
             }
         }
 
-        int block_size = 4;
+        int block_size = 16;
         #pragma omp parallel for
         for ( i = 0; i < a_rows; i += block_size ) {
                 struct complex a1, a2, a3, a4;
                 struct complex b1, b2, b3, b4;
 
-                float tmpReal[4] = {0,0,0,0};   
+                float tmpReal[4] = {0,0,0,0};
                 float tmpImg[4] = {0,0,0,0};
 
                 int j;
