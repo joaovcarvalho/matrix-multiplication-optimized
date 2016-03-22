@@ -197,7 +197,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             struct complex sum;
                             sum.real = 0.0;
                             sum.imag = 0.0;
-                            
+
                             __m128 sum4Real = _mm_set1_ps(0.0);
                             __m128 sum4Img = _mm_set1_ps(0.0);
 
