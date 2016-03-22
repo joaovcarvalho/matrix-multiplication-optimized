@@ -161,6 +161,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
         unsigned int i, j;
 
         // Calculating the transpose of the Matrix B
+        // So we can improve cache performance
         struct complex ** B = new_empty_matrix(b_cols, a_cols);
         for (i = 0; i < a_cols; ++i)
         {
@@ -171,11 +172,14 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
         }
 
         unsigned int block_size = 4;
+        // OpenMP Parallel For - Each iteration of the for is going to be
+        // a thread running in the processor
         #pragma omp parallel for
         for ( i = 0; i < a_rows; i += block_size ) {
                 struct complex a1, a2, a3, a4;
                 struct complex b1, b2, b3, b4;
 
+                // Use to retrieve the information from the SSE variable types
                 float tmpReal[4] = {0,0,0,0};   
                 float tmpImg[4] = {0,0,0,0};
 
@@ -188,7 +192,6 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
 
                     for (ii = i; ii < stopii; ++ii)
                     {
-                        
                         for (jj = j; jj < stopjj; jj++)
                         {
                             struct complex sum;
@@ -201,29 +204,51 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             struct complex* ka = A[ii];
                             struct complex* kb = B[jj];
 
+                            // Optimized for using pointers
                             while(ka < A[ii]+a_cols){
 
-                              a1 = *(ka);
-                              a2 = *(ka + 1);
-                              a3 = *(ka + 2);
-                              a4 = *(ka + 3);
+                              // This if is needed when the matrix is not a multiple of 4
+                              // So you need to deal with the case where there is less than 4 elements to sum
+                              if(ka + 3 >= A[ii]+a_cols){
 
-                              b1 = *(kb);
-                              b2 = *(kb + 1);
-                              b3 = *(kb + 2);
-                              b4 = *(kb + 3);
+                                // We don't know how much is left, so we check every iteration
+                                for (int u = 0; u <= 3 && ka + u < A[ii]+a_cols; ++u)
+                                {
+                                    // Normal computation of complex
+                                    struct complex product;
+                                    product.real = (*(ka + u)).real * (*(kb + u)).real - (*(ka + u)).imag * (*(kb + u)).imag;
+                                    product.imag = (*(ka + u)).real * (*(kb + u)).imag + (*(ka + u)).imag * (*(kb + u)).real;
+                                    sum.real += product.real;
+                                    sum.imag += product.imag;
+                                }
 
-                              __m128 aReal  = _mm_set_ps(a1.real, a2.real, a3.real, a4.real);
-                              __m128 bReal  = _mm_set_ps(b1.real, b2.real, b3.real, b4.real);
+                              }else{
 
-                              __m128 aImg   = _mm_set_ps(a1.imag, a2.imag, a3.imag, a4.imag);
-                              __m128 bImg   = _mm_set_ps(b1.imag, b2.imag, b3.imag, b4.imag);
+                                  // Getting the 4 elements pointers to multiply
+                                  a1 = *(ka);
+                                  a2 = *(ka + 1);
+                                  a3 = *(ka + 2);
+                                  a4 = *(ka + 3);
 
-                              __m128 productReal = _mm_sub_ps( _mm_mul_ps(aReal, bReal), _mm_mul_ps(aImg, bImg) );
-                              __m128 productImg = _mm_add_ps( _mm_mul_ps(aReal, bImg), _mm_mul_ps(aImg, bReal) );
+                                  b1 = *(kb);
+                                  b2 = *(kb + 1);
+                                  b3 = *(kb + 2);
+                                  b4 = *(kb + 3);
 
-                              sum4Real = _mm_add_ps(sum4Real, productReal);
-                              sum4Img = _mm_add_ps(sum4Img, productImg);
+                                  // SSE SIMD code
+                                  __m128 aReal  = _mm_set_ps(a1.real, a2.real, a3.real, a4.real);
+                                  __m128 bReal  = _mm_set_ps(b1.real, b2.real, b3.real, b4.real);
+
+                                  __m128 aImg   = _mm_set_ps(a1.imag, a2.imag, a3.imag, a4.imag);
+                                  __m128 bImg   = _mm_set_ps(b1.imag, b2.imag, b3.imag, b4.imag);
+
+                                  __m128 productReal = _mm_sub_ps( _mm_mul_ps(aReal, bReal), _mm_mul_ps(aImg, bImg) );
+                                  __m128 productImg  = _mm_add_ps( _mm_mul_ps(aReal, bImg), _mm_mul_ps(aImg, bReal) );
+
+                                  sum4Real = _mm_add_ps(sum4Real, productReal);
+                                  sum4Img  = _mm_add_ps(sum4Img, productImg);
+                              }
+
 
                               ka += 4;
                               kb += 4;
@@ -232,6 +257,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
                             _mm_storeu_ps(&tmpReal[0], sum4Real);
                             _mm_storeu_ps(&tmpImg[0], sum4Img);
 
+                            // For to sum the 4 elements in the SSE variable
                             for (p = 0; p < 4; ++p)
                             {
                                 sum.real += tmpReal[p];
