@@ -354,6 +354,7 @@ struct complex ** gen_random_matrix(int dim1, int dim2)
         free_matrix(C);
         free_matrix(control_matrix);
 
+        printf("Hello World");
         return 0;
     }
 
